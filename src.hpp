@@ -36,6 +36,7 @@ static inline bool bbox(const std::vector<std::vector<unsigned char> > &b, int &
 
 struct HoleInfo {
     int count;
+    int max_area;
     double cx, cy; // centroid of merged holes (average)
 };
 
@@ -82,7 +83,7 @@ static inline HoleInfo count_holes(const std::vector<std::vector<unsigned char> 
             }
         }
     }
-    int holes=0; double sumr=0.0, sumc=0.0; int cnt=0;
+    int holes=0; double sumr=0.0, sumc=0.0; int cnt=0; int max_area_comp=0;
     const int min_area = 5; // filter tiny cavities
     for(int i=0;i<H;++i){
         for(int j=0;j<W;++j){
@@ -105,11 +106,12 @@ static inline HoleInfo count_holes(const std::vector<std::vector<unsigned char> 
                 if (comp_cnt >= min_area) {
                     ++holes;
                     sumr += comp_sr; sumc += comp_sc; cnt += comp_cnt;
+                    if (comp_cnt > max_area_comp) max_area_comp = comp_cnt;
                 }
             }
         }
     }
-    HoleInfo info; info.count = holes;
+    HoleInfo info; info.count = holes; info.max_area = max_area_comp;
     if (cnt>0) { info.cy = sumr / cnt; info.cx = sumc / cnt; }
     else { info.cy = info.cx = -1.0; }
     return info;
@@ -165,10 +167,14 @@ int judge(std::vector<std::vector<double> > &img) {
 
     if (hi.count >= 2) return 8;
     if (hi.count == 1) {
+        // Use hole size and position to distinguish 0/6/9
         double hy = hi.cy - r0;
         double dx = std::fabs((hi.cx - c0) - cx) / (w>1 ? (double)w : 1.0);
         double dy = std::fabs(hy - cy) / (h>1 ? (double)h : 1.0);
-        if (dy < 0.10 && dx < 0.10 && wh_ratio > 0.7 && wh_ratio < 1.3) return 0;
+        double area_ratio = (double)hi.max_area / std::max(1, h*w);
+        // central, sufficiently large hole -> 0
+        if (dy < 0.10 && dx < 0.10 && wh_ratio > 0.7 && wh_ratio < 1.3 && area_ratio > 0.02) return 0;
+        // top hole likely 9, bottom hole likely 6
         if (hy < cy) return 9; else return 6;
     }
 
