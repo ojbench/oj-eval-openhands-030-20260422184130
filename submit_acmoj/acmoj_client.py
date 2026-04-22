@@ -92,7 +92,13 @@ class ACMOJClient:
         result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)
         if result and 'id' in result:
             self._save_submission_id(result['id'])
+        return result
 
+    def submit_code(self, problem_id: int, language: str, code: str) -> Optional[Dict]:
+        data = {"language": language, "code": code}
+        result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)
+        if result and 'id' in result:
+            self._save_submission_id(result['id'])
         return result
 
     def get_submission_detail(self, submission_id: int) -> Optional[Dict]:
@@ -112,7 +118,13 @@ def main():
     # Git submission sub-command
     submit_parser = subparsers.add_parser("submit", help="Submit Git repository")
     submit_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
-    submit_parser.add_argument("--git-url", type=str, required=True, help="Git repository URL")
+    submit_parser.add_argument("--git-url", type=str, help="Git repository URL")
+
+    # Direct code submission sub-command
+    code_parser = subparsers.add_parser("submit-code", help="Submit code directly")
+    code_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
+    code_parser.add_argument("--language", type=str, required=True, help="Language (e.g., cpp)")
+    code_parser.add_argument("--file", type=str, required=True, help="Path to code file to submit")
 
     # Sub-command for checking submission status
     status_parser = subparsers.add_parser("status", help="Check submission status")
@@ -131,7 +143,18 @@ def main():
     client = ACMOJClient(args.token)
 
     if args.command == "submit":
+        if not args.git_url:
+            print("Error: --git-url is required for submit")
+            return
         result = client.submit_git(args.problem_id, args.git_url)
+    elif args.command == "submit-code":
+        try:
+            with open(args.file, 'r') as f:
+                code = f.read()
+        except Exception as e:
+            print(f"Error reading file {args.file}: {e}")
+            return
+        result = client.submit_code(args.problem_id, args.language, code)
     elif args.command == "status":
         result = client.get_submission_detail(args.submission_id)
     elif args.command == "abort":
@@ -140,7 +163,6 @@ def main():
     if result:
         print(json.dumps(result))
     else:
-        # Exit with a non-zero status code to indicate failure to shell scripts
         exit(1)
 
 

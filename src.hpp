@@ -6,11 +6,12 @@
 #include <cmath>
 #include <algorithm>
 #include <cstddef>
+#include <utility>
 
-typedef std::vector<std::vector<double> > IMAGE_T;
+typedef std::vector< std::vector< double > > IMAGE_T;
 
 namespace nr_internal {
-static inline void binarize(const IMAGE_T &img, std::vector<std::vector<unsigned char> > &bin, double th = 0.5) {
+static inline void binarize(const std::vector<std::vector<double> > &img, std::vector<std::vector<unsigned char> > &bin, double th = 0.5) {
     const int n = (int)img.size();
     bin.assign(n, std::vector<unsigned char>(n, 0));
     for (int i = 0; i < n; ++i) {
