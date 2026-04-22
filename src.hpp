@@ -84,7 +84,7 @@ static inline HoleInfo count_holes(const std::vector<std::vector<unsigned char> 
         }
     }
     int holes=0; double sumr=0.0, sumc=0.0; int cnt=0; int max_area_comp=0;
-    const int min_area = 5; // filter tiny cavities
+    const int min_area = 20; // filter tiny cavities
     for(int i=0;i<H;++i){
         for(int j=0;j<W;++j){
             if(grid[i][j]==0){
@@ -172,8 +172,8 @@ int judge(std::vector<std::vector<double> > &img) {
         double dx = std::fabs((hi.cx - c0) - cx) / (w>1 ? (double)w : 1.0);
         double dy = std::fabs(hy - cy) / (h>1 ? (double)h : 1.0);
         double area_ratio = (double)hi.max_area / std::max(1, h*w);
-        // central, sufficiently large hole -> 0
-        if (dy < 0.10 && dx < 0.10 && wh_ratio > 0.7 && wh_ratio < 1.3 && area_ratio > 0.02) return 0;
+        // central hole -> 0 (relaxed thresholds)
+        if (dy < 0.15 && dx < 0.15 && wh_ratio > 0.7 && wh_ratio < 1.3) return 0;
         // top hole likely 9, bottom hole likely 6
         if (hy < cy) return 9; else return 6;
     }
