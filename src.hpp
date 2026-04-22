@@ -8,8 +8,6 @@
 #include <cstddef>
 #include <utility>
 
-typedef std::vector< std::vector< double > > IMAGE_T;
-
 namespace nr_internal {
 static inline void binarize(const std::vector<std::vector<double> > &img, std::vector<std::vector<unsigned char> > &bin, double th = 0.5) {
     const int n = (int)img.size();
@@ -125,7 +123,7 @@ static inline double band_density_cols(const std::vector<int> &col, int a, int b
 
 } // namespace
 
-int judge(IMAGE_T &img) {
+int judge(std::vector<std::vector<double> > &img) {
     using namespace nr_internal;
     if (img.empty() || img[0].empty()) return 0;
     std::vector<std::vector<unsigned char> > bin;
