@@ -215,6 +215,9 @@ int judge(std::vector<std::vector<double> > &img) {
     if (leftd < 0.20 && rightd > 0.55) {
         return 3;
     }
+    if ((rightd - leftd) > 0.30 && (top > bottom + 0.05) && center_vert > 0.55) {
+        return 3;
+    }
 
     double cx_norm = cx / (w>1 ? (double)w : 1.0);
     double lower = band_density_rows(row, (int)(0.5*rs + 0.5), rs);
