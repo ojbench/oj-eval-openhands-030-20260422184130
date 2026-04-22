@@ -39,6 +39,26 @@ struct HoleInfo {
     double cx, cy; // centroid of merged holes (average)
 };
 
+static inline std::vector<std::vector<unsigned char> > dilate1(const std::vector<std::vector<unsigned char> > &b){
+    int n = (int)b.size();
+    std::vector<std::vector<unsigned char> > out(n, std::vector<unsigned char>(n,0));
+    for(int i=0;i<n;++i){
+        for(int j=0;j<n;++j){
+            if(!b[i][j]){
+                bool on=false;
+                for(int di=-1; di<=1 && !on; ++di){
+                    for(int dj=-1; dj<=1 && !on; ++dj){
+                        int ni=i+di, nj=j+dj;
+                        if(ni>=0 && ni<n && nj>=0 && nj<n && b[ni][nj]) on=true;
+                    }
+                }
+                out[i][j] = on ? 1 : 0;
+            } else out[i][j]=1;
+        }
+    }
+    return out;
+}
+
 static inline HoleInfo count_holes(const std::vector<std::vector<unsigned char> > &b) {
     int n = (int)b.size();
     int H = n + 2, W = n + 2;
@@ -63,22 +83,28 @@ static inline HoleInfo count_holes(const std::vector<std::vector<unsigned char> 
         }
     }
     int holes=0; double sumr=0.0, sumc=0.0; int cnt=0;
+    const int min_area = 20; // filter tiny cavities
     for(int i=0;i<H;++i){
         for(int j=0;j<W;++j){
             if(grid[i][j]==0){
-                ++holes;
+                // new hole component
+                int comp_cnt=0; double comp_sr=0.0, comp_sc=0.0;
                 std::queue<std::pair<int,int> > q2;
                 q2.push(std::make_pair(i,j)); grid[i][j]=3;
                 while(!q2.empty()){
                     std::pair<int,int> p2 = q2.front(); q2.pop();
                     int r = p2.first, c = p2.second;
-                    sumr += (r-1); sumc += (c-1); ++cnt;
+                    comp_sr += (r-1); comp_sc += (c-1); ++comp_cnt;
                     for(int k=0;k<4;++k){
                         int nr=r+dr[k], nc=c+dc[k];
                         if(nr>=0 && nr<H && nc>=0 && nc<W && grid[nr][nc]==0){
                             grid[nr][nc]=3; q2.push(std::make_pair(nr,nc));
                         }
                     }
+                }
+                if (comp_cnt >= min_area) {
+                    ++holes;
+                    sumr += comp_sr; sumc += comp_sc; cnt += comp_cnt;
                 }
             }
         }
@@ -142,7 +168,7 @@ int judge(std::vector<std::vector<double> > &img) {
         double hy = hi.cy - r0;
         double dx = std::fabs((hi.cx - c0) - cx) / (w>1 ? (double)w : 1.0);
         double dy = std::fabs(hy - cy) / (h>1 ? (double)h : 1.0);
-        if (dy < 0.15 && dx < 0.15) return 0;
+        if (dy < 0.10 && dx < 0.10 && wh_ratio > 0.7 && wh_ratio < 1.3) return 0;
         if (hy < cy) return 9; else return 6;
     }
 
@@ -176,11 +202,11 @@ int judge(std::vector<std::vector<double> > &img) {
         bottom_left = band_density_rows(row, rmid0, rs) * band_density_cols(col, 0, c_mid);
         bottom_right = band_density_rows(row, rmid0, rs) * band_density_cols(col, c_mid, cs);
     }
-    if (mid > 0.28 && bottom_left < 0.06 && bottom_right > 0.10) {
+    if (mid > 0.35 && bottom < 0.18 && top > 0.12) {
         return 4;
     }
 
-    if (leftd < 0.20 && rightd > 0.55) {
+    if ((leftd < 0.30 && rightd > 0.45) && (top > bottom + 0.05)) {
         return 3;
     }
 
