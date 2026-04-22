@@ -83,7 +83,7 @@ static inline HoleInfo count_holes(const std::vector<std::vector<unsigned char> 
         }
     }
     int holes=0; double sumr=0.0, sumc=0.0; int cnt=0;
-    const int min_area = 20; // filter tiny cavities
+    const int min_area = 5; // filter tiny cavities
     for(int i=0;i<H;++i){
         for(int j=0;j<W;++j){
             if(grid[i][j]==0){
