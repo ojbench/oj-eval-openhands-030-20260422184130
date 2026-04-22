@@ -208,11 +208,11 @@ int judge(std::vector<std::vector<double> > &img) {
         bottom_left = band_density_rows(row, rmid0, rs) * band_density_cols(col, 0, c_mid);
         bottom_right = band_density_rows(row, rmid0, rs) * band_density_cols(col, c_mid, cs);
     }
-    if (mid > 0.35 && bottom < 0.18 && top > 0.12) {
+    if (mid > 0.28 && bottom_left < 0.06 && bottom_right > 0.10) {
         return 4;
     }
 
-    if ((leftd < 0.30 && rightd > 0.45) && (top > bottom + 0.05)) {
+    if (leftd < 0.20 && rightd > 0.55) {
         return 3;
     }
 
